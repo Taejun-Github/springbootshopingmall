@@ -14,7 +14,7 @@
             calculateTotalPrice();
 
             $("#count").change(function() {
-                calculateTotalPrice();
+                calculateTotalPrice(); // 수량을 올릴 때마다 밑의 가격이 늘어나게 한다.
             })
         });
 
@@ -23,6 +23,45 @@
             let price = $("#price").val();
             let totalPrice = price * count;
             $("#totalPrice").html(totalPrice + '원');
+        }
+
+        function order() {
+
+            let token = $("meta[name='_csrf']").attr("content");
+            let header = $("meta[name='_csrf_header']").attr("content");
+
+            let url = "/order";
+            let paramData = {
+                itemId: $("#itemId").val(),
+                count: $("#count").val()
+            };
+
+
+            let param = JSON.stringify(paramData);
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json",
+                data: param,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(header, token);
+                    // 데이터를 전송하기 전에 헤더에 csrf 값을 설정한다.
+                },
+                dataType: "json",
+                cache: false,
+                success : function(result, status) {
+                    alert("주문이 완료되었습니다");
+                    location.href='/';
+                },
+                error: function(jqXHR, status, error) {
+                    if(jqXHR.status == '401') {
+                        location.href = '/members/login';
+                    } else {
+                        alert(jqXHR.responseText);
+                    }
+                }
+            });
         }
     </script>
 </th:block>
@@ -82,7 +121,7 @@
                 <h3 name="totalPrice" id="totalPrice" class="font-weight-bold"></h3>
             </div>
             <div th:if="${item.itemSellStatus == T(com.shop.constant.ItemSellStatus).SELL}" class="text-right">
-                <button type="button" class="btn btn-primary btn-lg">주문하기</button>
+                <button type="button" class="btn btn-primary btn-lg" onclick="order()">주문하기</button>
             </div>
             <div th:unless="${item.itemSellStatus == T(com.shop.constant.ItemSellStatus).SELL}" class="text-right">
                 <button type="button" class="btn btn-danger btn-lg">품절</button>
