@@ -36,6 +36,7 @@ public class OrderService {
         Member member = memberRepository.findByEmail(email);
 
         List<OrderItem> orderItemList = new ArrayList<>();
+        // orderDto가 한개임에도 굳이 이렇게 한 이유는, 뒤에서 List로 한꺼번에 주문할 때와 따로 함수를 만들지 않기 위해서이다.
         OrderItem orderItem = OrderItem.createOrderItem(item, orderDto.getCount());
         orderItemList.add(orderItem);
 
@@ -83,5 +84,23 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(EntityNotFoundException::new);
         order.cancelOrder();
+    }
+
+    public Long orders(List<OrderDto> orderDtoList, String email) {
+        Member member = memberRepository.findByEmail(email);
+        List<OrderItem> orderItemList = new ArrayList<>();
+
+        for(OrderDto orderDto : orderDtoList) {
+            Item item = itemRepository.findById(orderDto.getItemId())
+                    .orElseThrow(EntityNotFoundException::new);
+
+            OrderItem orderItem = OrderItem.createOrderItem(item, orderDto.getCount());
+            orderItemList.add(orderItem);
+        }
+
+        Order order = Order.createOrder(member, orderItemList);
+        orderRepository.save(order);
+
+        return order.getId();
     }
 }
